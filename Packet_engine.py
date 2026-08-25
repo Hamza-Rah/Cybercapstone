@@ -129,6 +129,8 @@ def analyze_pcap(pcap_path: str):
     extract_payloads_tshark(pcap_path)
 
 if __name__ == "__main__":
-    target_pcap = "sample_traffic.pcap"
-    analyze_pcap(target_pcap)
+    test_pcaps = ["synthetic_dns_attack.pcap", "synthetic_tcp_attack.pcap"]
     
+    for pcap in test_pcaps:
+        print(f"\n{'='*20} Testing: {pcap} {'='*20}")
+        analyze_pcap(pcap)
