@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+extracted_payloads/
+payload_manifest.json
+hash_verification_results.json
+*.pyc
