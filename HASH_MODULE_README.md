@@ -4,20 +4,20 @@
 
 This module checks the integrity of files extracted from network traffic captures. After `Packet_engine.py` pulls files out of a `.pcap` (packet capture) and records each one's SHA-256 hash in `payload_manifest.json`, this module cross-checks those hashes against two reference lists:
 
-- **`baseline_hashes.json`** — hashes of files already confirmed to be clean/expected
-- **`known_threat_hashes.json`** — hashes of files known to be malicious
+- **`baseline_hashes.json`** - hashes of files already confirmed to be clean/expected
+- **`known_threat_hashes.json`** - hashes of files known to be malicious
 
 Every file gets one of three verdicts:
 
 | Status | Meaning |
 |---|---|
-| `BASELINE_MATCH` | File is identical to a known-good file — safe |
-| `MALICIOUS_MATCH` | File's hash matches a known threat — alert |
-| `UNVERIFIED` | File hasn't been seen before — needs manual review |
+| `BASELINE_MATCH` | File is identical to a known-good file - safe |
+| `MALICIOUS_MATCH` | File's hash matches a known threat - alert |
+| `UNVERIFIED` | File hasn't been seen before - needs manual review |
 
 ## Why hashing?
 
-A SHA-256 hash is a fixed-length "fingerprint" generated from a file's exact contents. Identical files always produce the same hash; changing even a single byte produces a completely different hash. This makes hashing a fast, reliable way to detect whether a file is unmodified, previously seen, or matches a known threat — without needing to compare files byte-by-byte or rely on filenames (which can be spoofed).
+A SHA-256 hash is a fixed-length "fingerprint" generated from a file's exact contents. Identical files always produce the same hash; changing even a single byte produces a completely different hash. This makes hashing a fast, reliable way to detect whether a file is unmodified, previously seen, or matches a known threat - without needing to compare files byte-by-byte or rely on filenames (which can be spoofed).
 
 ## How it works
 
@@ -27,10 +27,10 @@ A SHA-256 hash is a fixed-length "fingerprint" generated from a file's exact con
 
 ## Files in this module
 
-- `run_analysis.py` — runs the extraction pipeline against the team's pcaps
-- `verify_hashes.py` — performs the hash verification
-- `baseline_hashes.json` — known-good file hashes
-- `known_threat_hashes.json` — known-malicious file hashes (sourced from [MalwareBazaar](https://bazaar.abuse.ch/))
+- `run_analysis.py` - runs the extraction pipeline against the team's pcaps
+- `verify_hashes.py` - performs the hash verification
+- `baseline_hashes.json` - known-good file hashes
+- `known_threat_hashes.json` - known-malicious file hashes (sourced from [MalwareBazaar](https://bazaar.abuse.ch/))
 
 ## Usage
 
