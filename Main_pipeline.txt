@@ -1,0 +1,72 @@
+"""
+main_pipeline.py - Master Orchestrator for Covert Channel-Hunt
+"""
+import os
+import json
+from datetime import datetime, timezone
+
+# 1. Import your packet engine routines
+from Packet_engine import run_pipeline, ALERT_LOG, MANIFEST_FILE
+
+# 2. Import Sarah's stego detector
+try:
+    from stego_detector import detect_image
+    DETECTOR_LOADED = True
+except ImportError:
+    print("[!] stego_detector.py or model pickle not found. Running network engine only.")
+    DETECTOR_LOADED = False
+
+def run_master_pipeline(pcap_path: str):
+    print(f"=== [STAGE 1] Running Network Intake & Carving on: {pcap_path} ===")
+    run_pipeline(pcap_path)
+
+    if not DETECTOR_LOADED or not os.path.exists(MANIFEST_FILE):
+        print("[!] Skipping steganography ML inference.")
+        return
+
+    print("\n=== [STAGE 2] Running ML Steganalysis on Carved Payloads ===")
+    with open(MANIFEST_FILE, "r") as f:
+        manifest = json.load(f)
+
+    stego_alerts = []
+    for item in manifest:
+        # Check if the file is a lossless image candidate
+        if item.get("is_stego_candidate", False):
+            file_path = item["filepath"]
+            print(f"[*] Analyzing carrier: {item['filename']} ...")
+            
+            try:
+                # Runs Sarah's Random Forest inference
+                result = detect_image(file_path)
+                # result returns: {"stego_probability": float, "flagged": bool, "notes": str}
+                
+                if result.get("flagged", False) or result.get("stego_probability", 0) >= 0.5:
+                    alert = {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "layer": "Application_Payload",
+                        "event_type": "Steganography_Payload_Detected",
+                        "filename": item["filename"],
+                        "filepath": file_path,
+                        "sha256": item["sha256"],
+                        "stego_probability": round(result.get("stego_probability", 0), 4),
+                        "severity": "HIGH",
+                        "notes": result.get("notes", "LSB steganography anomaly flagged by RF model")
+                    }
+                    stego_alerts.append(alert)
+                    print(f"[ALERT] Steganography detected in {item['filename']} (Confidence: {alert['stego_probability']})")
+                else:
+                    print(f"[+] File clean: {item['filename']} (Prob: {result.get('stego_probability', 0):.2f})")
+            except Exception as e:
+                print(f"[!] Error analyzing {item['filename']}: {e}")
+
+    # Append Steganography detections to the centralized Wazuh log
+    if stego_alerts:
+        with open(ALERT_LOG, "a") as f:
+            for alert in stego_alerts:
+                f.write(json.dumps(alert) + "\n")
+        print(f"[+] Appended {len(stego_alerts)} stego detection alert(s) to {ALERT_LOG}")
+
+if __name__ == "__main__":
+    import sys
+    target_pcap = sys.argv[1] if len(sys.argv) > 1 else "sample_traffic.pcap"
+    run_master_pipeline(target_pcap)
